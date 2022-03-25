@@ -1,15 +1,16 @@
 from collections import OrderedDict as od
+import openpyxl
 import pandas as pd
 import fuzzywuzzy
 from fuzzywuzzy import process
 from fuzzywuzzy import fuzz
 import pyodbc
 import sqlalchemy
-df1 = pd.read_excel(r"C:\Users\jisikhueme003\Documents\Recon\Zenith Ledger 1-31.01.2022.xlsx",sheet_name='Sheet1')
+df1 = pd.read_excel("Zenith Ledger 1-31.01.2022.xlsx",sheet_name='Sheet1',engine='openpyxl')
 
 d1 = df1[["Date","Description","Amount"]]
 
-df2 = pd.read_excel(r"C:\Users\jisikhueme003\Documents\Recon\Zenith Bank Statement - 1-31.01.22.xlsx", sheet_name='Zenith Statement')
+df2 = pd.read_excel("Zenith Bank Statement - 1-31.01.22.xlsx", sheet_name='Zenith Statement',engine='openpyxl')
 
 df2["Credit Amount"] = df2["Credit Amount"].fillna(0)
 
@@ -214,22 +215,14 @@ thirdLevel=thirdLevel.drop([
                             'code','Match_Percent','filter1']
                             ,axis=1
                             )
-thirdLevel['Description_New']=thirdLevel['Description_Statement']
+thirdLevel['Description_Statement']=thirdLevel['Description_New']
 
 secondLevel=secondLevel.drop(['Left or Right_x','Left or Right_y','code'],axis=1)
 
-conn = pyodbc.connect("""
-                      DRIVER={ODBC Driver 17 for SQL Server}; 
-                      SERVER=ngfwcq3f3\mssqlserver01; 
-                      DATABASE=NameTestDB;Trusted_Connection=yes
-                      """)
+conn = pyodbc.connect("DRIVER={ODBC Driver 17 for SQL Server}; SERVER=ngfwcq3f3\mssqlserver01; DATABASE=NameTestDB;Trusted_Connection=yes")
 cursor = conn.cursor()
 
-engine = sqlalchemy.create_engine(
-                    """
-                    mssql+pyodbc://ngfwcq3f3\mssqlserver01/NameTestDB?
-                    driver=ODBC Driver 17 for SQL Server
-                    """)
+engine = sqlalchemy.create_engine("mssql+pyodbc://ngfwcq3f3\mssqlserver01/NameTestDB?driver=ODBC Driver 17 for SQL Server")
 
 firstLevel.to_sql("firstlevelmatch",engine,if_exists='replace')
 secondLevel.to_sql("secondlevelmatch",engine,if_exists='replace')
