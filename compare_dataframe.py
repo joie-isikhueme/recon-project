@@ -6,11 +6,11 @@ from fuzzywuzzy import process
 from fuzzywuzzy import fuzz
 import pyodbc
 import sqlalchemy
-df1 = pd.read_excel("Zenith Ledger 1-31.01.2022.xlsx",sheet_name='Sheet1',engine='openpyxl')
+df1 = pd.read_excel("filename1.xlsx",sheet_name='Sheet1',engine='openpyxl')
 
 d1 = df1[["Date","Description","Amount"]]
 
-df2 = pd.read_excel("Zenith Bank Statement - 1-31.01.22.xlsx", sheet_name='Zenith Statement',engine='openpyxl')
+df2 = pd.read_excel("filename2.xlsx", sheet_name='Zenith Statement',engine='openpyxl')
 
 df2["Credit Amount"] = df2["Credit Amount"].fillna(0)
 
