@@ -246,6 +246,6 @@ manualMatch.to_sql("manualmatch",engine,if_exists='replace')
 
 #k=[None]
 
-#cck=prob_l[~prob_l.Description_New.isin(k)]
+
 
 
