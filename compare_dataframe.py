@@ -1,4 +1,5 @@
 from collections import OrderedDict as od
+from operator import le
 import openpyxl
 import pandas as pd
 import fuzzywuzzy
@@ -6,11 +7,11 @@ from fuzzywuzzy import process
 from fuzzywuzzy import fuzz
 import pyodbc
 import sqlalchemy
-df1 = pd.read_excel("Zenith Ledger 1-31.01.2022.xlsx",sheet_name='Sheet1',engine='openpyxl')
+df1 = pd.read_excel("Zenith_Ledger_March.xlsx",sheet_name='Sheet1',engine='openpyxl')
 
 d1 = df1[["Date","Description","Amount"]]
 
-df2 = pd.read_excel("Zenith Bank Statement - 1-31.01.22.xlsx", sheet_name='Zenith Statement',engine='openpyxl')
+df2 = pd.read_excel("Zenith_Statement_March.xlsx", sheet_name='Sheet1',engine='openpyxl')
 
 df2["Credit Amount"] = df2["Credit Amount"].fillna(0)
 
@@ -97,11 +98,11 @@ def diff_func(df_left, df_right, uid, labels=('Left', 'Right'), drop=[[],[]]):
 
         if type(uid)==list:
             df_left_only = df_left.append(df_merge).reset_index(drop=True)
-            df_left_only['Duplicated']=df_left_only.duplicated(keep=False)  #keep=False, marks all duplicates as True
-            df_left_only = df_left_only[~df_left_only['Duplicated']]
+            # df_left_only['Duplicated']=df_left_only.duplicated(keep=False)  #keep=False, marks all duplicates as True
+            # df_left_only = df_left_only[~df_left_only['Duplicated']]
             df_right_only = df_right.append(df_merge).reset_index(drop=True)
-            df_right_only['Duplicated']=df_right_only.duplicated(keep=False)
-            df_right_only = df_right_only[~df_right_only['Duplicated']]
+            # df_right_only['Duplicated']=df_right_only.duplicated(keep=False)
+            # df_right_only = df_right_only[~df_right_only['Duplicated']]
 
             label = '{} or {}'.format(*labels)
             df_lc = df_left_only.copy()
@@ -109,19 +110,19 @@ def diff_func(df_left, df_right, uid, labels=('Left', 'Right'), drop=[[],[]]):
             df_rc = df_right_only.copy()
             df_rc[label] = labels[1]
             df_c = df_lc.append(df_rc).reset_index(drop=True)
-            df_c['Duplicated'] = df_c.duplicated(subset=uid, keep=False)
-            df_c1 = df_c[df_c['Duplicated']]
-            df_c1 = df_c1.drop('Duplicated', axis=1)
-            cols = df_c1.columns.tolist()
-            df_c1 = df_c1[[cols[-1]]+cols[:-1]]
-            df_uc = df_c[~df_c['Duplicated']]
+            # df_c['Duplicated'] = df_c.duplicated(subset=uid, keep=False)
+            # df_c1 = df_c[df_c['Duplicated']]
+            # df_c1 = df_c1.drop('Duplicated', axis=1)
+            # cols = df_c1.columns.tolist()
+            # df_c1 = df_c1[[cols[-1]]+cols[:-1]]
+            # df_uc = df_c[~df_c['Duplicated']]
 
-            df_uc_left = df_uc[df_uc[label]==labels[0]]
-            df_uc_right = df_uc[df_uc[label]==labels[1]]
+            # df_uc_left = df_uc[df_uc[label]==labels[0]]
+            # df_uc_right = df_uc[df_uc[label]==labels[1]]
 
-            d_result[labels[0]+'_only'] = df_uc_left.drop(['Duplicated', label], axis=1)
-            d_result[labels[1]+'_only'] = df_uc_right.drop(['Duplicated', label], axis=1)
-            d_result['Diff'] = df_c1.sort_values(uid).reset_index(drop=True)
+            # d_result[labels[0]+'_only'] = df_uc_left.drop(['Duplicated', label], axis=1)
+            # d_result[labels[1]+'_only'] = df_uc_right.drop(['Duplicated', label], axis=1)
+            d_result['Diff'] = df_c.sort_values(uid).reset_index(drop=True)
     
     return d_result
 
@@ -133,6 +134,12 @@ diff_ = d_1["Diff"]
 
 merge= d_1['Merge']
 
+# diff_.rename({'D or e': 'Left or Right'},axis = 1, inplace = True)
+
+# leftOnly = d_1['D']
+
+# rightOnly = d_1['e']
+
 leftOnly = d_1['Left_only']
 
 rightOnly = d_1['Right_only']
@@ -140,6 +147,10 @@ rightOnly = d_1['Right_only']
 probable = diff_
 
 probable["code"] = probable["Description"] + probable["Amount"].astype(str)
+
+# prob_l = probable.loc[probable["Left or Right"] == "D"]
+
+# prob_r = probable.loc[probable["Left or Right"] == "e"]
 
 prob_l = probable.loc[probable["Left or Right"] == "Left"]
 
@@ -151,6 +162,10 @@ prob_result_ = pd.merge(prob_l, prob_r, on=["code"],how='inner')
 ccc=prob_result_['code']
 probable_2=probable[~probable.code.isin(ccc)]
 
+
+# prob2_l = probable_2.loc[probable_2["Left or Right"] == "D"]
+
+# prob2_r = probable_2.loc[probable_2["Left or Right"] == "e"]
 
 prob2_l = probable_2.loc[probable_2["Left or Right"] == "Left"]
 
@@ -173,6 +188,8 @@ matched=["no_match"]
 prob2_l['filter1']=prob2_l['matched_description'].map({'-':"no_match"})
 prob2_result_ = prob2_l.loc[~prob2_l.filter1.isin(matched)]
 
+prob2result_new=pd.merge(prob2_result_,prob2_r[['Date', 'Amount','Description']],left_on='Description_New',right_on='Description',how='left')
+
 l=[]
 l.extend(prob2_result_['Description'].tolist())
 l.extend(prob2_result_['Description_New'].tolist())
@@ -186,48 +203,69 @@ ccc=l["value"]
 
 probable_3=probable_2[~probable_2.Description.isin(ccc)]
 
+# prob3_l = probable_3.loc[probable_3["Left or Right"] == "D"]
+
+# prob3_r = probable_3.loc[probable_3["Left or Right"] == "e"]
+
 prob3_l = probable_3.loc[probable_3["Left or Right"] == "Left"]
 
 prob3_r = probable_3.loc[probable_3["Left or Right"] == "Right"]
 
 
-prob3_l['matched_description']=prob3_l['code'].apply(lambda x: process.extractOne(x, prob3_r['code'].to_list(),score_cutoff=80))
+prob3_l['matched_description']=prob3_l['Description'].apply(lambda x: process.extractOne(x, prob3_r['Description'].to_list(),score_cutoff=80))
 
 try:
     prob3_l['Description_New'],prob3_l['Match_Percent'] = prob3_l['matched_description'].str[0],prob3_l['matched_description'].str[1]
 except Exception:
     pass
+manual_match=pd.merge(prob3_l,prob3_r[['Date', 'Amount','Description']],left_on='Description_New',right_on='Description',how='left')
 
 firstLevel = merge
 secondLevel = prob_result_
-thirdLevel = prob2_result_
-manualMatch = prob3_l
+thirdLevel = prob2result_new
+manualMatch = manual_match
 
 manualMatch=manualMatch.drop(
                             ['Left or Right',
                              'matched_description',
-                             'code','Match_Percent']
+                             'code','Match_Percent','Description_y']
                             ,axis=1)
-manualMatch['Description_Statement']=manualMatch['Description_New']
+manualMatch.rename({
+                'Date_x':'Date_Ledger','Description_x':'Description_Ledger',
+                'Amount_x':'Amount_Ledger','Description_New':'Description_BS',
+                'Date_y':'Date_BS','Amount_y':'Amount_BS'
+                }, axis = 1, inplace=True)
+
+thirdLevel['Description_Statement']=thirdLevel['Description_New']
 
 thirdLevel=thirdLevel.drop([
                             'Left or Right','matched_description',
-                            'code','Match_Percent','filter1']
+                            'code','Description_y','filter1','Description_Statement']
                             ,axis=1
                             )
-thirdLevel['Description_Statement']=thirdLevel['Description_New']
+thirdLevel.rename({
+                'Date_x':'Date_Ledger','Description_x':'Description_Ledger',
+                'Amount_x':'Amount_Ledger','Description_New':'Description_BS',
+                'Date_y':'Date_BS','Amount_y':'Amount_BS'
+                }, axis = 1, inplace=True)
 
 secondLevel=secondLevel.drop(['Left or Right_x','Left or Right_y','code'],axis=1)
 
-conn = pyodbc.connect("DRIVER={ODBC Driver 17 for SQL Server}; SERVER=ngfwcq3f3\mssqlserver01; DATABASE=NameTestDB;Trusted_Connection=yes")
+conn = pyodbc.connect("DRIVER={ODBC Driver 17 for SQL Server}; SERVER=ngfwcq3f3\mssqlserver01; DATABASE=Recon_DB;Trusted_Connection=yes")
 cursor = conn.cursor()
 
-engine = sqlalchemy.create_engine("mssql+pyodbc://ngfwcq3f3\mssqlserver01/NameTestDB?driver=ODBC Driver 17 for SQL Server")
+engine = sqlalchemy.create_engine("mssql+pyodbc://ngfwcq3f3\mssqlserver01/Recon_DB?driver=ODBC Driver 17 for SQL Server")
 
 firstLevel.to_sql("firstlevelmatch",engine,if_exists='replace')
 secondLevel.to_sql("secondlevelmatch",engine,if_exists='replace')
 thirdLevel.to_sql("thirdlevelmatch",engine,if_exists='replace')
 manualMatch.to_sql("manualmatch",engine,if_exists='replace')
+leftOnly.to_sql("ledgeronly",engine,if_exists='replace') 
+rightOnly.to_sql("bsOnly",engine,if_exists='replace')
+
+
+leftOnly.to_excel('ledgeronly.xlsx')
+rightOnly.to_excel('bankstatementonly.xlsx')
 
 
 
