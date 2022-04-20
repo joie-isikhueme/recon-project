@@ -7,11 +7,19 @@ from fuzzywuzzy import process
 from fuzzywuzzy import fuzz
 import pyodbc
 import sqlalchemy
+<<<<<<< HEAD
 df1 = pd.read_excel("Zenith_Ledger_March.xlsx",sheet_name='Sheet1',engine='openpyxl')
 
 d1 = df1[["Date","Description","Amount"]]
 
 df2 = pd.read_excel("Zenith_Statement_March.xlsx", sheet_name='Sheet1',engine='openpyxl')
+=======
+df1 = pd.read_excel("filename1.xlsx",sheet_name='Sheet1',engine='openpyxl')
+
+d1 = df1[["Date","Description","Amount"]]
+
+df2 = pd.read_excel("filename2.xlsx", sheet_name='Zenith Statement',engine='openpyxl')
+>>>>>>> 54066da40103f576291e07d32e1235f5e7d5e0ec
 
 df2["Credit Amount"] = df2["Credit Amount"].fillna(0)
 
@@ -284,6 +292,6 @@ rightOnly.to_excel('bankstatementonly.xlsx')
 
 #k=[None]
 
-#cck=prob_l[~prob_l.Description_New.isin(k)]
+
 
 
