@@ -128,7 +128,7 @@ bs_remaining=bs_remaining.append(probable_match2_bs).reset_index(drop=True)
 bs_remaining=bs_remaining.drop_duplicates(keep=False)
 
 
-ledger_remaining['matched_description']=ledger_remaining['Description'].apply(lambda x: process.extractOne(x, bs_remaining['Description_y'].to_list(),score_cutoff=86))
+ledger_remaining['matched_description']=ledger_remaining['Description'].apply(lambda x: process.extractOne(x, bs_remaining['Description_y'].to_list(),score_cutoff=87))
 try:
     ledger_remaining['Description_New'],ledger_remaining['Match_Percent'] = ledger_remaining['matched_description'].str[0],ledger_remaining['matched_description'].str[1]
 except Exception:
@@ -194,6 +194,20 @@ probable_match2_new.rename({
 probable_match3_new.drop(['matched_description',
                         'filter1'
                         ],axis=1, inplace=True)
+probable_match2_new.rename({
+                    'Date':'Date_Ledger',
+                    'Description':'Description_Ledger',
+                    'Amount':'Amount_Legder',
+                    'Date_y':'Date_BS',
+                    'Description_y':'Description_BS',
+                    'Amount_y':'Amount_BS'
+                     },axis=1,inplace=True)
+
+# Date_Ledger Description_Ledger,
+# Amount_Ledger,count,
+#  Description_New, Match_Percent,  
+# count_desc_y, Date_BS, 
+# Description_BS, Amount_BS, count_y
 
 firstLevel=merged
 secondLevel=probable_match
@@ -207,9 +221,28 @@ cursor = conn.cursor()
 
 engine = sqlalchemy.create_engine("mssql+pyodbc://ngfwcq3f3\mssqlserver01/Recon_DB?driver=ODBC Driver 17 for SQL Server")
 
+if cursor.tables(table='manualmatch', tableType='TABLE').fetchone():
+    print("exists")
+else:
+    cursor.execute('''
+                    CREATE TABLE manualmatch (
+                            Date_Ledger datetime,
+                            Description_Ledger varchar(1500),
+                            Amount_Ledger float,
+                            count bigint,
+                            Description_New varchar(1500),
+                            Match_Percent float,
+                            count_desc_y bigint,
+                            Date_BS datetime,
+                            Description_BS varchar(1500),
+                            Amount_BS float,
+                            count_y float
+                            )
+                    ''')
+    conn.commit()
 firstLevel.to_sql("firstlevelmatch",engine,if_exists='replace')
 secondLevel.to_sql("secondlevelmatch",engine,if_exists='replace')
 thirdLevel.to_sql("thirdlevelmatch",engine,if_exists='replace')
-manualMatch.to_sql("manualmatch",engine,if_exists='replace')
+manualMatch.to_sql("manualmatch",engine,if_exists='append')
 ledgerOnly.to_sql("ledgeronly",engine,if_exists='replace') 
 bsOnly.to_sql("bsOnly",engine,if_exists='replace')
